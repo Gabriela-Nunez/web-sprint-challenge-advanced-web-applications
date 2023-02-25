@@ -6,9 +6,8 @@ const initialFormValues = { title: '', text: '', topic: '' }
 export default function ArticleForm(props) {
   const [values, setValues] = useState(initialFormValues)
   // ✨ where are my props? Destructure them here
-  
-
-  const { postArticle, updateArticle, currentArticle, setCurrentArticleId } = props;
+  const { postArticle, updateArticle, currentArticle, setCurrentArticleId, currentArticleId } = props;
+  console.log(props);
   
   console.log(currentArticle);
   useEffect(() => {
@@ -32,11 +31,19 @@ export default function ArticleForm(props) {
   const onSubmit = evt => {
     evt.preventDefault();
     if(currentArticle) {
-      props.postArticle(currentArticle);
+      updateArticle({
+        article_id: currentArticle.article_id,
+        article: {
+          title: values.title,
+          text: values.text,
+          topic: values.topic
+        }
+      })
+      setCurrentArticleId(null);
+      setValues(initialFormValues);
     } else {
-      props.updateArticle(currentArticle);
+      postArticle(values);
     }
-    // postArticle(values);
     setValues(initialFormValues);
     // ✨ implement
     // We must submit a new post or update an existing one,
@@ -57,7 +64,7 @@ export default function ArticleForm(props) {
     // ✨ fix the JSX: make the heading display either "Edit" or "Create"
     // and replace Function.prototype with the correct function
     <form id="form" onSubmit={onSubmit}>
-      <h2>Create Article</h2>
+      <h2>{currentArticleId ? 'Edit' : 'Create'} Article</h2>
       <input
         maxLength={50}
         onChange={onChange}
@@ -80,7 +87,7 @@ export default function ArticleForm(props) {
       </select>
       <div className="button-group">
         <button disabled={isDisabled()} id="submitArticle">Submit</button>
-        <button onClick={() => props.updateArticle(article_id)}>Cancel edit</button>
+        <button onClick={() => setCurrentArticleId(null)}>Cancel edit</button>
       </div>
     </form>
   )

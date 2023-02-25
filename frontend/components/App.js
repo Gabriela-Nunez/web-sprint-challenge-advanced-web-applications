@@ -7,6 +7,7 @@ import Message from './Message'
 import ArticleForm from './ArticleForm'
 import Spinner from './Spinner'
 import { axiosWithAuth } from '../axios'
+import PrivateRoute from './PrivateRoute'
 
 const articlesUrl = 'http://localhost:9000/api/articles'
 const loginUrl = 'http://localhost:9000/api/login'
@@ -114,46 +115,51 @@ export default function App() {
     })
   }
 
-  const updateArticle = ({ article_id, article }) => {
+  const updateArticle = ({ article_id: id, article }) => {
     // ✨ implement
     // You got this!
     setMessage('');
     setSpinnerOn(true);
     const token = localStorage.getItem('token');
     const headers = { authorization: token};
-    const payload = { title: article.title, text: article.text, topic: article.topic }
-    axios.put(`${articlesUrl}/${article_id}`, payload, {
+    const articlePayload = { title, text, topic, id }
+
+    if (!id) {
+      console.error('Missing article_id');
+      return;
+    }
+
+    axios.put(`${articlesUrl}/${id}`, articlePayload, {
       headers,
     })
     .then(res => {
       setSpinnerOn(false);
-      setMessage(res.data.message);
-      getArticles();
+      setArticles(articles.concat(res.data.article));
+      setCurrentArticleId(null);
     })
     .catch(err => {
       console.log(err);
     })
   }
 
-  const deleteArticle = article_id => {
+  const deleteArticle = (article_id) => {
     // ✨ implement
     setMessage("");
     setSpinnerOn(true);
     const token = localStorage.getItem('token');
     const headers = { authorization: token };
-    const articlePayload = {
-      id: article.id,
-      title: article.title,
-      text: article.text,
-      topic: article.topic,
-    };
-    
-    axios.delete(`${articlesUrl}/${article_id}`, articlePayload, { headers })
+
+    if (!article_id) {
+      console.error('Missing article_id');
+      return;
+    }
+
+    axios.delete(`${articlesUrl}/${article_id}`, { headers })
     .then(res => {
       setSpinnerOn(false);
       setMessage(res.data.message);
       console.log(res);
-      setArticles(res.data.article);
+      setArticles(articles.filter(article => article.id !== article_id));
     })
     .catch(err => {
       console.log(err)
@@ -176,20 +182,25 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LoginForm login={login}/>} />
           <Route path="articles" element={
+            <PrivateRoute>
             <>
-              <ArticleForm 
-              postArticle={postArticle}
-              updateArticle={updateArticle}
-              deleteArticle={deleteArticle}
-              />
-              <Articles 
-              articles={articles}
-              getArticles={getArticles}
-              currentArticleId={currentArticleId}
-              updateArticle={updateArticle}
-              deleteArticle={deleteArticle}
-              />
-            </>
+                <ArticleForm 
+                postArticle={postArticle}
+                updateArticle={updateArticle}
+                deleteArticle={deleteArticle}
+                setCurrentArticleId={setCurrentArticleId}
+
+                />
+                <Articles 
+                articles={articles}
+                getArticles={getArticles}
+                currentArticleId={currentArticleId}
+                updateArticle={updateArticle}
+                deleteArticle={deleteArticle}
+                setCurrentArticleId={setCurrentArticleId}
+                />
+              </>
+            </PrivateRoute>
           } />
         </Routes>
         <footer>Bloom Institute of Technology 2022</footer>
