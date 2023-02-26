@@ -97,22 +97,20 @@ export default function App() {
     // to inspect the response from the server.
     setMessage('');
     setSpinnerOn(true);
-    const token = localStorage.getItem('token');
-    const { title, text, topic } = article;
-    const payload = { title, text, topic };
-    const headers = { authorization: token }
-    axios.post(articlesUrl, payload, {
-      headers,
-    }) 
-    .then(res => {
-      setMessage(res.data.message);
-      setSpinnerOn(false);
-      setArticles((articles) => [...articles, res.data.article]);
-      redirectToArticles();
-    })
-    .catch(err => {
-      console.log(err)
-    })
+    axiosWithAuth()
+      .post(articlesUrl, article)
+        .then(res => {
+          console.log(res);
+          setMessage(res.data.message);
+          setArticles([...articles, res.data.article]);
+          setSpinnerOn(false);
+        })
+        .catch(err => {
+          setMessage('');
+          if(err.response.status === 401) navigate('/');
+          setSpinnerOn(false);
+          console.log(err);
+        });
   }
 
   const updateArticle = ({ article_id: id, article }) => {
@@ -120,50 +118,42 @@ export default function App() {
     // You got this!
     setMessage('');
     setSpinnerOn(true);
-    const token = localStorage.getItem('token');
-    const headers = { authorization: token};
-    const articlePayload = { title, text, topic, id }
-
-    if (!id) {
-      console.error('Missing article_id');
-      return;
-    }
-
-    axios.put(`${articlesUrl}/${id}`, articlePayload, {
-      headers,
-    })
-    .then(res => {
-      setSpinnerOn(false);
-      setArticles(articles.concat(res.data.article));
-      setCurrentArticleId(null);
-    })
-    .catch(err => {
-      console.log(err);
-    })
+    axiosWithAuth()
+      .put(`${articlesUrl}/${article.article_id}`, { title: article.title, text: article.text, topic: article.topic })
+        .then(res => {
+          setMessage(res.data.message);
+          setSpinnerOn(false);
+          const updatedArticles = articles.map(el => {
+            if(el.article_id === article.article_id) return {...el , title: article.title, text: article.text, topic: article.topic};
+            return el;
+          });
+          setArticles(updatedArticles);
+        })
+        .catch(err => {
+          setMessage('');
+          console.error(err);
+          setSpinnerOn(false);
+        });
   }
 
   const deleteArticle = (article_id) => {
     // ✨ implement
     setMessage("");
     setSpinnerOn(true);
-    const token = localStorage.getItem('token');
-    const headers = { authorization: token };
-
-    if (!article_id) {
-      console.error('Missing article_id');
-      return;
-    }
-
-    axios.delete(`${articlesUrl}/${article_id}`, { headers })
-    .then(res => {
-      setSpinnerOn(false);
-      setMessage(res.data.message);
-      console.log(res);
-      setArticles(articles.filter(article => article.id !== article_id));
-    })
-    .catch(err => {
-      console.log(err)
-    })
+    axiosWithAuth()
+      .delete(`${articlesUrl}/${article_id}`)
+        .then(res => {
+          setMessage(res.data.message);
+          console.log(res);
+          const filteredArticles = articles.filter(el => el.article_id !== article_id);
+          setArticles(filteredArticles);
+          setSpinnerOn(false);
+        })
+        .catch(err => {
+          setMessage('');
+          console.error(err);
+          setSpinnerOn(false);
+        });
   }
   
 
@@ -189,6 +179,8 @@ export default function App() {
                 updateArticle={updateArticle}
                 deleteArticle={deleteArticle}
                 setCurrentArticleId={setCurrentArticleId}
+                articles={articles}
+                setSpinnerOn={setSpinnerOn}
 
                 />
                 <Articles 
@@ -198,6 +190,7 @@ export default function App() {
                 updateArticle={updateArticle}
                 deleteArticle={deleteArticle}
                 setCurrentArticleId={setCurrentArticleId}
+                setSpinnerOn={setSpinnerOn}
                 />
               </>
             </PrivateRoute>
