@@ -1,69 +1,67 @@
+
 import React, { useEffect, useState } from 'react'
 import PT from 'prop-types'
 
 const initialFormValues = { title: '', text: '', topic: '' }
 
 export default function ArticleForm(props) {
-  const [values, setValues] = useState(initialFormValues)
+  const {
+    currentArticleId, 
+    articles, 
+    postArticle, 
+    updateArticle, 
+    setCurrentArticleId,
+    setSpinnerOn
+  } = props;
+
+  const [values, setValues] = useState(initialFormValues);
   // ✨ where are my props? Destructure them here
-  const { postArticle, updateArticle, currentArticle, setCurrentArticleId, currentArticleId, setSpinnerOn } = props;
-  
- 
+
   useEffect(() => {
+    if(currentArticleId) {
+      setValues(articles.find(article => article.article_id === currentArticleId));
+    } else {
+      setValues(initialFormValues);
+    }
     // ✨ implement
     // Every time the `currentArticle` prop changes, we should check it for truthiness:
     // if it's truthy, we should set its title, text and topic into the corresponding
     // values of the form. If it's not, we should reset the form back to initial values.
-    
-    if (currentArticleId) {
-      setValues(articles.find(article => article.article_id === currentArticleId))
-    } else {
-      setValues(initialFormValues)
-    }
-  }, [currentArticle])
-
-
-  
+  }, [currentArticleId]);
 
   const onChange = evt => {
     const { id, value } = evt.target
     setValues({ ...values, [id]: value })
   }
 
-  const handleCancelEdit = () => {
-    setCurrentArticleId(null);
-  }
-
   const onSubmit = evt => {
     evt.preventDefault();
     setSpinnerOn(true);
     if(currentArticleId) {
-      updateArticle(values)
+      updateArticle(values);
       setCurrentArticleId(null);
     } else {
       postArticle(values);
     }
     setValues(initialFormValues);
-    // ✨ implement
-    // We must submit a new post or update an existing one,
-    // depending on the truthyness of the `currentArticle` prop.
+  }
+
+  const handleCancelEdit = () => {
+    setCurrentArticleId(null);
   }
 
   const isDisabled = () => {
+    if(values.title && values.text && values.topic) return false;
+    return true;
     // ✨ implement
     // Make sure the inputs have some values
-    return !(
-      values.title.trim().length >=1 && 
-      values.text.trim().length >=1 &&
-      values.topic
-      );
   }
 
   return (
     // ✨ fix the JSX: make the heading display either "Edit" or "Create"
     // and replace Function.prototype with the correct function
     <form id="form" onSubmit={onSubmit}>
-      <h2>{currentArticleId ? 'Edit Article' : 'Create Article'} Article</h2>
+      <h2>{currentArticleId ? 'Edit Article' : 'Create Article'}</h2>
       <input
         maxLength={50}
         onChange={onChange}
@@ -87,7 +85,6 @@ export default function ArticleForm(props) {
       <div className="button-group">
         <button disabled={isDisabled()} id="submitArticle">Submit</button>
         {currentArticleId ? <button onClick={handleCancelEdit}>Cancel edit</button> : null}
-       
       </div>
     </form>
   )
@@ -105,3 +102,6 @@ ArticleForm.propTypes = {
     topic: PT.string.isRequired,
   })
 }
+
+
+

@@ -17,23 +17,20 @@ useEffect(() => {
    } else {
     getArticles();
    }
-}, [])
+
+}, [currentArticle])
 
 const redirectToLogin = () => { 
 return navigate('/')} 
 
-const handleEditArticle = (id) => {
-  setCurrentArticleId(id);
+const handleEditArticle = (article_id) => {
+  setCurrentArticleId(article_id);
 };
 
 const handleDeleteArticle = (id) => {
   setSpinnerOn(true);
   deleteArticle(id);
 }
-
-  
-  
- 
 
   
 
